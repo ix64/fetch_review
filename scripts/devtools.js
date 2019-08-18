@@ -1,30 +1,23 @@
-/*chrome.devtools.panels.create("Fetch Review",
-    "images/icon48.png",
-    "panel.html",
-    function (panel) {
-    }
-);*/
-
 chrome.devtools.network.onRequestFinished.addListener(
     function (request) {
-        if (request.request.url.indexOf("https://rate.taobao.com/feedRateList.htm") !== -1) {
-            request.getContent((content, encoding) => {
+        if (request.request.url.indexOf("https://rate.taobao.com/feedRateList.htm") === 0) {
+            request.getContent((content) => {
                 const all = jsonp2json(content).comments;
                 log(all);
                 all.forEach(item => {
                     uploadReview("taobao", item.rateId, item);
                 });
             });
-        } else if (request.request.url.indexOf("https://rate.tmall.com/list_detail_rate.htm") !== -1) {
-            request.getContent((content, encoding) => {
+        } else if (request.request.url.indexOf("https://rate.tmall.com/list_detail_rate.htm") === 0) {
+            request.getContent((content) => {
                 const all = jsonp2json(content).rateDetail.rateList;
                 log(all);
                 all.forEach(item => {
                     uploadReview("tmall", item.id, item);
                 });
             });
-        } else if (request.request.url.indexOf("https://sclub.jd.com/comment/productPageComments.action") !== -1) {
-            request.getContent((content, encoding) => {
+        } else if (request.request.url.indexOf("https://sclub.jd.com/comment/productPageComments.action") === 0) {
+            request.getContent((content) => {
                 const all = jsonp2json(content).comments;
                 log(all);
                 all.forEach(item => {
@@ -32,8 +25,8 @@ chrome.devtools.network.onRequestFinished.addListener(
                 });
 
             });
-        } else if (request.request.url.indexOf("https://review.suning.com/ajax/cluster_review_lists/") !== -1) {
-            request.getContent((content, encoding) => {
+        } else if (request.request.url.indexOf("https://review.suning.com/ajax/cluster_review_lists/") === 0) {
+            request.getContent((content) => {
                 const all = jsonp2json(content).commodityReviews;
                 log(all);
                 all.forEach(item => {
@@ -65,7 +58,7 @@ function uploadReview(source, id, data) {
         server: 'https://sz2.ixarea.com/review/'
     }, function (items) {
         const url = items.server + source + "/" + id;
-        postJson(url, data, res => log(res.json()), () => {
+        postJson(url, data, res => log(res), () => {
             log("Fail to Upload Review");
         });
     });
