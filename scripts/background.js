@@ -46,7 +46,8 @@ function autoTmall() {
     document.querySelector("a[href='#J_Reviews']").click();
     for (let i = 0; i < 10; i++) {
         setTimeout(() => {
-            document.querySelector("#J_Reviews").querySelectorAll("a[data-page]")[1].click()
+            let links = document.querySelector("#J_Reviews").querySelectorAll("a[data-page]");
+            links[links.length - 1].click()
         }, 1000 * i)
     }
 }

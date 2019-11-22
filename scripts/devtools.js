@@ -2,37 +2,54 @@ chrome.devtools.network.onRequestFinished.addListener(
     function (request) {
         if (request.request.url.indexOf("https://rate.taobao.com/feedRateList.htm") === 0) {
             request.getContent((content) => {
-                const all = jsonp2json(content).comments;
-                log(all);
-                all.forEach(item => {
-                    uploadReview("taobao", item.rateId, item);
-                });
+                const all = jsonp2json(content);
+                if (all.hasOwnProperty("comments")) {
+                    log(all.comments);
+                    all.comments.forEach(item => {
+                        uploadReview("taobao", item.rateId, item);
+                    });
+                } else {
+                    log("Taobao Comments Response is not be Adapted!");
+                    log(all);
+                }
             });
         } else if (request.request.url.indexOf("https://rate.tmall.com/list_detail_rate.htm") === 0) {
             request.getContent((content) => {
-                const all = jsonp2json(content).rateDetail.rateList;
-                log(all);
-                all.forEach(item => {
-                    uploadReview("tmall", item.id, item);
-                });
+                const all = jsonp2json(content);
+                if (all.hasOwnProperty("rateDetail")) {
+                    all.rateDetail.rateList.forEach(item => {
+                        uploadReview("tmall", item.id, item);
+                    });
+                } else {
+                    log("Tmall Comments Response is not be Adapted!");
+                    log(all);
+                }
             });
         } else if (request.request.url.indexOf("https://sclub.jd.com/comment/productPageComments.action") === 0) {
             request.getContent((content) => {
-                const all = jsonp2json(content).comments;
-                log(all);
-                all.forEach(item => {
-                    uploadReview("jd", item.id, item);
-                });
-
+                const all = jsonp2json(content);
+                if (all.hasOwnProperty("comments")) {
+                    log(all.comments);
+                    all.comments.forEach(item => {
+                        uploadReview("jd", item.id, item);
+                    });
+                } else {
+                    log("JD Comments Response is not be Adapted!");
+                    log(all);
+                }
             });
         } else if (request.request.url.indexOf("https://review.suning.com/ajax/cluster_review_lists/") === 0) {
             request.getContent((content) => {
-                const all = jsonp2json(content).commodityReviews;
-                log(all);
-                all.forEach(item => {
-                    uploadReview("suning", item.commodityReviewId, item);
-                });
-
+                const all = jsonp2json(content);
+                if (all.hasOwnProperty("commodityReviews")) {
+                    log(all.commodityReviews);
+                    all.commodityReviews.forEach(item => {
+                        uploadReview("suning", item.commodityReviewId, item);
+                    });
+                } else {
+                    log("Suning Comments Response is not be Adapted!");
+                    log(all);
+                }
             });
         }
 
@@ -40,17 +57,18 @@ chrome.devtools.network.onRequestFinished.addListener(
 );
 
 function log(data) {
+    console.log(data);
     chrome.devtools.inspectedWindow.eval(
         'console.log(JSON.parse(unescape("' +
         escape(JSON.stringify(data)) + '")))');
 }
 
 function jsonp2json(content) {
-    let matches = content.match(/\w+\(({[^()]+})\)/);
-    if (matches) {
-        return JSON.parse(matches[1]);
+    let start = content.indexOf("("), stop = content.lastIndexOf(")");
+    if (stop > start && start > 0) {
+        return JSON.parse(content.substring(start + 1, stop))
     }
-    return content;
+    return null;
 }
 
 function uploadReview(source, id, data) {
@@ -76,7 +94,7 @@ function reportError(message, url, lineNumber, columnNo, error) {
         server: 'https://sz2.ixarea.com/review/'
     }, function (items) {
         const url = items.server + "report/";
-        postJson(url, data, res => log(res.json()), () => {
+        postJson(url, data, res => log(res), () => {
                 log("Fail to Report Error");
             }
         );
@@ -93,6 +111,11 @@ function postJson(url, data, callback, error_callback) {
             'Content-Type': 'application/json'
         })
     })
+        .then(res => res.text())
+        .catch(error => {
+            error_callback(error);
+            log(error);
+        })
         .then(callback)
-        .catch(error_callback);
+    ;
 }
